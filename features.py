@@ -154,17 +154,13 @@ class HarrisKeypointDetector(KeypointDetector):
 
         # TODO 2: Compute the local maxima image
         # TODO-BLOCK-BEGIN
-        m, n = harrisImage.shape
 
-        for i in range(m):
-            for j in range(n):
-                is_max = True
-                for k in range(i - 3, i + 3):
-                    for l in range(j - 3, j + 3):
-                        if inbounds(harrisImage.shape, (k, l)):
-                            if k, l != i, j:
-                                is_max = harrisImage[i, j] > harrisImage[k, l]
-                destImage = is_max
+        newSize = (7, 7)
+        maxima = scipy.ndimage.filters.maximum_filter(
+            harrisImage, size=newSize)
+        local_maxima = np.equal(harrisImage, maxima)
+        destImage = local_maxima.astype(np.bool)
+
         # TODO-BLOCK-END
 
         return destImage
