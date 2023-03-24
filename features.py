@@ -26,31 +26,6 @@ def inbounds(shape, indices):
             return False
     return True
 
-# Function to make a gaussian filter, implemented in PA1, size k x k and with
-# standard deviation sigma
-
-
-def gaussian_filter(k, sigma):
-    def gaussian(x, y):
-        exponent = - (x ** 2 + y ** 2) / (2 * sigma ** 2)
-        return np.exp(exponent)
-
-    def coord(i, j):
-        x = abs(k // 2 - i)
-        y = abs(k // 2 - j)
-        return x, y
-
-    filter = np.zeros((k, k))
-
-    for i in range(k):
-        for j in range(k):
-            x, y = coord(i, j)
-            filter[i][j] = gaussian(x, y)
-
-    filter /= np.sum(filter)
-
-    return filter
-
 
 ## Keypoint detectors ##########################################################
 
@@ -211,7 +186,10 @@ class HarrisKeypointDetector(KeypointDetector):
                 # f.angle to the orientation in degrees and f.response to
                 # the Harris score
                 # TODO-BLOCK-BEGIN
-                raise Exception("TODO in features.py not implemented")
+                f.size = 10
+                f.pt = (x, y)
+                f.angle = orientationImage[y, x]
+                f.response = harrisImage[y, x]
                 # TODO-BLOCK-END
 
                 features.append(f)
