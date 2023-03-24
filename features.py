@@ -9,6 +9,7 @@ import transformations
 
 ## Helper functions ############################################################
 
+
 def inbounds(shape, indices):
     '''
         Input:
@@ -24,6 +25,31 @@ def inbounds(shape, indices):
         if ind < 0 or ind >= shape[i]:
             return False
     return True
+
+# Function to make a gaussian filter, implemented in PA1, size k x k and with
+# standard deviation sigma
+
+
+def gaussian_filter(k, sigma):
+    def gaussian(x, y):
+        exponent = - (x ** 2 + y ** 2) / (2 * sigma ** 2)
+        return np.exp(exponent)
+
+    def coord(i, j):
+        x = abs(k // 2 - i)
+        y = abs(k // 2 - j)
+        return x, y
+
+    filter = np.zeros((k, k))
+
+    for i in range(k):
+        for j in range(k):
+            x, y = coord(i, j)
+            filter[i][j] = gaussian(x, y)
+
+    filter /= np.sum(filter)
+
+    return filter
 
 
 ## Keypoint detectors ##########################################################
@@ -87,10 +113,53 @@ class HarrisKeypointDetector(KeypointDetector):
         orientationImage = np.zeros(srcImage.shape[:2])
 
         # TODO 1: Compute the harris corner strength for 'srcImage' at
-        # each pixel and store in 'harrisImage'. Also compute an 
+        # each pixel and store in 'harrisImage'. Also compute an
         # orientation for each pixel and store it in 'orientationImage.'
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+
+        Ix = scipy.ndimage.sobel(srcImage, 1)
+        Iy = scipy.ndimage.sobel(srcImage, 0)
+
+        G = gaussian_filter(5, 0.5)
+
+        for i in range(width):
+            for j in range(height):
+                h1 = 0
+                h2 = 0
+                h3 = 0
+                h4 = 0
+
+                for k in range(5):
+                    for l in range(5):
+                        xt = k-2+i
+                        yt = l-2+j
+
+                        if xt < 0:
+                            xt = 0
+                        if yt < 0:
+                            yt = 0
+                        if xt > width - 1:
+                            xt = width - 1
+                        if yt > height - 1:
+                            yt = height - 1
+
+                        Ixp = Ix[yt, xt]
+                        Iyp = Iy[yt, xt]
+                        gauss = G[k, l]
+
+                        h1 = h1 + gauss * Ixp ** 2
+                        h2 = h2 + gauss * Ixp * Iyp
+                        h3 = h3 + gauss * Ixp * Iyp
+                        h4 = h4 + gauss * Iyp ** 2
+
+                determinant = (h1 * h4) - (h2 * h3)
+                trace = h1 + h4
+                c = determinant - 0.1 * (trace ** 2)
+                harrisImage[j][i] = c
+
+                conversion = 180. / np.pi
+                orientationImage[j][i] = np.arctan2(Iyp, Ixp) * conversion
+
         # TODO-BLOCK-END
 
         return harrisImage, orientationImage
@@ -171,8 +240,6 @@ class ORBKeypointDetector(KeypointDetector):
         return detector.detect(image)
 
 
-
-
 ## Feature descriptors #########################################################
 
 class FeatureDescriptor(object):
@@ -247,7 +314,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # Call the warp affine function to do the mapping
             # It expects a 2x3 matrix
             destImage = cv2.warpAffine(grayImage, transMx,
-                (windowSize, windowSize), flags=cv2.INTER_LINEAR)
+                                       (windowSize, windowSize), flags=cv2.INTER_LINEAR)
 
             # TODO 6: Normalize the descriptor to have zero mean and unit
             # variance. If the variance is negligibly small (which we
@@ -268,8 +335,6 @@ class ORBFeatureDescriptor(KeypointDetector):
             desc = np.zeros((0, 128))
 
         return desc
-
-
 
 
 ## Feature matchers ############################################################
@@ -306,7 +371,7 @@ class FeatureMatcher(object):
         d = h[6]*x + h[7]*y + h[8]
 
         return np.array([(h[0]*x + h[1]*y + h[2]) / d,
-            (h[3]*x + h[4]*y + h[5]) / d])
+                         (h[3]*x + h[4]*y + h[5]) / d])
 
 
 class SSDFeatureMatcher(FeatureMatcher):
