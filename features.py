@@ -120,45 +120,20 @@ class HarrisKeypointDetector(KeypointDetector):
         Ix = scipy.ndimage.sobel(srcImage, 1)
         Iy = scipy.ndimage.sobel(srcImage, 0)
 
-        G = gaussian_filter(5, 0.5)
+        Ix2 = Ix ** 2
+        Iy2 = Iy ** 2
+        Ixy = Ix * Iy
 
-        for i in range(width):
-            for j in range(height):
-                h1 = 0
-                h2 = 0
-                h3 = 0
-                h4 = 0
+        G_Ix2 = scipy.ndimage.gaussian_filter(Ix2, 0.5)
+        G_Iy2 = scipy.ndimage.gaussian_filter(Iy2, 0.5)
+        G_Ixy = scipy.ndimage.gaussian_filter(Ixy, 0.5)
 
-                for k in range(5):
-                    for l in range(5):
-                        xt = k-2+i
-                        yt = l-2+j
+        determinant = G_Ix2 * G_Iy2 - G_Ixy ** 2
+        trace = G_Ix2 + G_Iy2
+        harrisImage = determinant - 0.1 * (trace ** 2)
 
-                        if xt < 0:
-                            xt = 0
-                        if yt < 0:
-                            yt = 0
-                        if xt > width - 1:
-                            xt = width - 1
-                        if yt > height - 1:
-                            yt = height - 1
-
-                        Ixp = Ix[yt, xt]
-                        Iyp = Iy[yt, xt]
-                        gauss = G[k, l]
-
-                        h1 = h1 + gauss * Ixp ** 2
-                        h2 = h2 + gauss * Ixp * Iyp
-                        h3 = h3 + gauss * Ixp * Iyp
-                        h4 = h4 + gauss * Iyp ** 2
-
-                determinant = (h1 * h4) - (h2 * h3)
-                trace = h1 + h4
-                c = determinant - 0.1 * (trace ** 2)
-                harrisImage[j][i] = c
-
-                conversion = 180. / np.pi
-                orientationImage[j][i] = np.arctan2(Iyp, Ixp) * conversion
+        conversion = 180. / np.pi
+        orientationImage = np.arctan2(Iy, Ix) * conversion
 
         # TODO-BLOCK-END
 
