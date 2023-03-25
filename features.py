@@ -230,7 +230,16 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # as a row-major vector. Treat pixels outside the image as zero.
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+            simple_desc = []
+            for ypos in range(x - 2, x + 2 + 1):
+                for xpos in range(y - 2, y + 2 + 1):
+                    m, n, _ = grayImage.shape
+                    if inbounds((ypos, xpos), (m, n)):
+                        simple_desc.append(grayImage[ypos][xpos])
+                    else:
+                        simple_desc.append(0)
+            
+            desc[y][x] = np.array(simple_desc)
             # TODO-BLOCK-END
 
         return desc
