@@ -230,6 +230,7 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # as a row-major vector. Treat pixels outside the image as zero.
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
+<<<<<<< HEAD
             j = 0
             for r in range(5):
                 for c in range(5):
@@ -243,6 +244,18 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
                         desc[i][j] = 0
                     j = j + 1
 
+=======
+            simple_desc = []
+            for ypos in range(x - 2, x + 2 + 1):
+                for xpos in range(y - 2, y + 2 + 1):
+                    m, n, _ = grayImage.shape
+                    if inbounds((ypos, xpos), (m, n)):
+                        simple_desc.append(grayImage[ypos][xpos])
+                    else:
+                        simple_desc.append(0)
+            
+            desc[y][x] = np.array(simple_desc)
+>>>>>>> fde05af94f3b4ba51be637f3d693a135c251a094
             # TODO-BLOCK-END
 
         return desc
