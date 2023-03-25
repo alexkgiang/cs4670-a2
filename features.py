@@ -230,16 +230,18 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
             # as a row-major vector. Treat pixels outside the image as zero.
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            simple_desc = []
-            for ypos in range(x - 2, x + 2 + 1):
-                for xpos in range(y - 2, y + 2 + 1):
-                    m, n, _ = grayImage.shape
-                    if inbounds((ypos, xpos), (m, n)):
-                        simple_desc.append(grayImage[ypos][xpos])
+            j = 0
+            for r in range(5):
+                for c in range(5):
+                    row = y + r - 2
+                    col = x + c - 2
+                    m,n = np.shape(grayImage)
+
+                    if 0 <= row < m and 0 <= col < n:
+                        desc[i][j] = grayImage[row][col]
                     else:
-                        simple_desc.append(0)
-            
-            desc[y][x] = np.array(simple_desc)
+                        desc[i][j] = 0
+                    j = j + 1
             # TODO-BLOCK-END
 
         return desc
@@ -276,7 +278,26 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # helper functions that might be useful
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+            x, y = int(f.pt[0]), int(f.pt[1])
+
+            array = np.array([-x, -y, 0])
+
+            trans_vec = np.array([4,4,0])
+            conversion = -f.angle/180*np.pi
+
+            t1 = transformations.get_trans_mx(array)
+            r = transformations.get_rot_mx(0, 0, conversion)
+            s = transformations.get_scale_mx(.2, .2, 1)
+            t2 = transformations.get_trans_mx(trans_vec)
+
+            order = [r, s, t2]
+            dot = t1
+            for transformation in order:
+                dot = np.dot(transformation, dot)
+
+            transMx = np.array([[dot[0][0], dot[0][1], dot[0][3]],
+            				    [dot[1][0], dot[1][1], dot[1][3]]])
+
             # TODO-BLOCK-END
 
             # Call the warp affine function to do the mapping
@@ -289,7 +310,18 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # define as less than 1e-10) then set the descriptor
             # vector to zero. Lastly, write the vector to desc.
             # TODO-BLOCK-BEGIN
-            raise Exception("TODO in features.py not implemented")
+            
+            
+            wSize = (windowSize, windowSize)
+            std = np.std(destImage)
+            if std < 1e-5:
+                destImage = np.zeros(wSize)
+            else:
+                destImage -= np.mean(destImage)
+                destImage /= std
+
+            desc[i] = np.ravel(destImage)
+
             # TODO-BLOCK-END
 
         return desc
@@ -373,7 +405,15 @@ class SSDFeatureMatcher(FeatureMatcher):
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+        
+        
+        cdist = scipy.spatial.distance.cdist(desc1, desc2, metric='euclidean')
+        ind = np.argmin(cdist, axis=1)
+
+        m,_ = np.shape(desc1)
+
+        matches = [cv2.DMatch(_queryIdx=j, _trainIdx=ind[j], _distance=cdist[j][ind[j]]) for j in range(m)]
+
         # TODO-BLOCK-END
 
         return matches
