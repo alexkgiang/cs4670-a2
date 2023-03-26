@@ -456,24 +456,24 @@ class RatioFeatureMatcher(FeatureMatcher):
         
         cdist = scipy.spatial.distance.cdist(desc1, desc2, metric='euclidean')
         a,b = np.shape(cdist)
-        ind = np.argmin(cdist, axis=1)
+        ind1 = np.argmin(cdist, axis=1)
 
         m,n = np.shape(desc1)
-        min_dist = np.zeros(m)
+        min_dist1 = np.zeros(m)
         feature_train = np.zeros((a,b))
 
-        second_min_indexes = np.zeros(desc1.shape[0], dtype=int)
-        second_dist = np.zeros(desc1.shape[0])
+        ind2 = np.zeros(desc1.shape[0], dtype=int)
+        min_dist2 = np.zeros(desc1.shape[0])
 
         for i in range(desc1.shape[0]):
-            feature_train[i] = ind[i]
-            min_dist[i] = cdist[i][feature_train[i]]
+            feature_train[i] = ind1[i]
+            min_dist1[i] = cdist[i][feature_train[i]]
             cdist[i][feature_train[i]] = 10000000
 
-            second_min_indexes[i] = cdist.argmin(axis=1)[i]
-            second_dist[i] = cdist[i][second_min_indexes[i]]
+            ind2[i] = cdist.argmin(axis=1)[i]
+            min_dist2[i] = cdist[i][ind2[i]]
 
-        matches = [cv2.DMatch(_queryIdx=i, _trainIdx=feature_train[i], _distance=(min_dist[i] / second_dist[i]) if second_dist[i] != 0 else 1) for i in range(desc1.shape[0])]
+        matches = [cv2.DMatch(_queryIdx=i, _trainIdx=feature_train[i], _distance=(min_dist1[i] / min_dist2[i]) if min_dist2[i] != 0 else 1) for i in range(desc1.shape[0])]
 
         # TODO-BLOCK-END
 
