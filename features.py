@@ -458,23 +458,23 @@ class RatioFeatureMatcher(FeatureMatcher):
         a,b = np.shape(cdist)
         ind1 = np.argmin(cdist, axis=1)
 
-        m,n = np.shape(desc1)
+        m,_ = np.shape(desc1)
         min_dist1 = np.zeros(m)
-        feature_train = np.zeros((a,b))
+        feature_train = np.empty_like(ind1)
 
-        ind2 = np.zeros(desc1.shape[0], dtype=int)
-        min_dist2 = np.zeros(desc1.shape[0])
-
-        for i in range(desc1.shape[0]):
+        for i in range(m):
             feature_train[i] = ind1[i]
             min_dist1[i] = cdist[i][feature_train[i]]
             cdist[i][feature_train[i]] = 10000000
 
-            ind2[i] = cdist.argmin(axis=1)[i]
+        ind2 = np.argmin(cdist, axis=1)
+        min_dist2 = np.zeros(m)
+
+        for i in range(m):
             min_dist2[i] = cdist[i][ind2[i]]
 
-        matches = [cv2.DMatch(_queryIdx=i, _trainIdx=feature_train[i], _distance=(min_dist1[i] / min_dist2[i]) if min_dist2[i] != 0 else 1) for i in range(desc1.shape[0])]
-
+        matches = [cv2.DMatch(_queryIdx=i, _trainIdx=feature_train[i], _distance=(min_dist1[i] / min_dist2[i]) if min_dist2[i] != 0 else 1) for i in range(m)]
+        
         # TODO-BLOCK-END
 
         return matches
