@@ -453,7 +453,28 @@ class RatioFeatureMatcher(FeatureMatcher):
         # Note: multiple features from the first image may match the same
         # feature in the second image.
         # TODO-BLOCK-BEGIN
-        raise Exception("TODO in features.py not implemented")
+        
+        cdist = scipy.spatial.distance.cdist(desc1, desc2, metric='euclidean')
+        a,b = np.shape(cdist)
+        ind = np.argmin(cdist, axis=1)
+
+        m,n = np.shape(desc1)
+        min_dist = np.zeros(m)
+        feature_train = np.zeros((a,b))
+
+        second_min_indexes = np.zeros(desc1.shape[0], dtype=int)
+        second_dist = np.zeros(desc1.shape[0])
+
+        for i in range(desc1.shape[0]):
+            feature_train[i] = ind[i]
+            min_dist[i] = cdist[i][feature_train[i]]
+            cdist[i][feature_train[i]] = 10000000
+
+            second_min_indexes[i] = cdist.argmin(axis=1)[i]
+            second_dist[i] = cdist[i][second_min_indexes[i]]
+
+        matches = [cv2.DMatch(_queryIdx=i, _trainIdx=feature_train[i], _distance=(min_dist[i] / second_dist[i]) if second_dist[i] != 0 else 1) for i in range(desc1.shape[0])]
+
         # TODO-BLOCK-END
 
         return matches
