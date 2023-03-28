@@ -103,7 +103,7 @@ class HarrisKeypointDetector(KeypointDetector):
         G_Iy2 = scipy.ndimage.gaussian_filter(Iy2, 0.5)
         G_Ixy = scipy.ndimage.gaussian_filter(Ixy, 0.5)
 
-        determinant = G_Ix2 * G_Iy2 - G_Ixy ** 2
+        determinant = G_Ix2 * G_Iy2 - G_Ixy * G_Ixy
         trace = G_Ix2 + G_Iy2
         harrisImage = determinant - 0.1 * (trace ** 2)
 
@@ -236,7 +236,6 @@ class SimpleFeatureDescriptor(FeatureDescriptor):
                     row = y + r - 2
                     col = x + c - 2
                     m,n = np.shape(grayImage)
-
                     if 0 <= row < m and 0 <= col < n:
                         desc[i][j] = grayImage[row][col]
                     else:
@@ -278,7 +277,8 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             # helper functions that might be useful
             # Note: use grayImage to compute features on, not the input image
             # TODO-BLOCK-BEGIN
-            x, y = int(f.pt[0]), int(f.pt[1])
+            x = int(f.pt[0])
+            y = int(f.pt[1])
 
             array = np.array([-x, -y, 0])
 
@@ -286,9 +286,9 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             conversion = -f.angle/180*np.pi
 
             t1 = transformations.get_trans_mx(array)
+            t2 = transformations.get_trans_mx(trans_vec)
             r = transformations.get_rot_mx(0, 0, conversion)
             s = transformations.get_scale_mx(.2, .2, 1)
-            t2 = transformations.get_trans_mx(trans_vec)
 
             order = [r, s, t2]
             dot = t1
@@ -314,7 +314,7 @@ class MOPSFeatureDescriptor(FeatureDescriptor):
             
             wSize = (windowSize, windowSize)
             std = np.std(destImage)
-            if std < 1e-5:
+            if std < (1e-10) ** (1/2):
                 destImage = np.zeros(wSize)
             else:
                 destImage -= np.mean(destImage)
@@ -465,7 +465,7 @@ class RatioFeatureMatcher(FeatureMatcher):
         for i in range(m):
             feature_train[i] = ind1[i]
             min_dist1[i] = cdist[i][feature_train[i]]
-            cdist[i][feature_train[i]] = 10000000
+            cdist[i][feature_train[i]] = 1000000
 
         ind2 = np.argmin(cdist, axis=1)
         min_dist2 = np.zeros(m)
