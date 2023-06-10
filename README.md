@@ -1,1 +1,1 @@
-# cs4670-a2
+Computer vision assignment 2
